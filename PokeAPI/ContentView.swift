@@ -8,17 +8,36 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    @ObservedObject var viewModel: PokemonListViewModel
+    @StateObject private var detailViewModel = PokemonDetailViewModel()
+    @State private var searchText = ""
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationView {
+            List {
+                Text("Use the advanced search to find Pokemon by type, weakness, ability and more!")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                SearchBar(text: $searchText)
+                ForEach(filteredPokemonList, id: \.id) { pokemon in
+                    NavigationLink(destination: PokemonDetailView(viewModel: detailViewModel, pokemonId: pokemon.id)) {
+                        PokemonListRow(pokemon: pokemon)
+                    }
+                }
+            }
+            .onAppear {
+                viewModel.fetchPokemonList()
+            }
+            .navigationTitle("Pokedex")
         }
-        .padding()
     }
-}
-
-#Preview {
-    ContentView()
+    
+    private var filteredPokemonList: [Pokemon] {
+        if searchText.isEmpty {
+            return viewModel.pokemonList
+        } else {
+            return viewModel.pokemonList.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
 }
